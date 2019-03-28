@@ -3,6 +3,7 @@ from flask import *
 import json
 import wx_login
 
+#test
 '''
 defaultencoding = "utf-8"
 if sys.getdefaultencoding() != defaultencoding:
