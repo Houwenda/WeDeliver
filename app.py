@@ -49,7 +49,7 @@ def receiver_data():
 @app.route('/api/receiver_publish',methods=['POST'])
 def receiver_publish():
     pass
-#login api
+#login api adads
 @app.route('/api/login',methods=['POST'])
 def Login():
     user_code = str(request.values.get("code"))
