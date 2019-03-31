@@ -24,4 +24,3 @@ services:
     restart: always
     ports:
       - 6379:6379
-    commands: ["redis-server", "--requirepass", "redis"]
