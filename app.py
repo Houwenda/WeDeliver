@@ -17,7 +17,7 @@ if sys.getdefaultencoding() != defaultencoding:
 
 #----------------------Initailization--------------
 app = Flask(__name__)
-rds = redis.StrictRedis.from_url(os.environ.get('REDIS_URL'))
+rds = redis.StrictRedis.from_url("redis://@127.0.0.1:6379")
 app.config['SESSION_COOKIE_NAME'] = 'WESESSID'
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_KEY_PREFIX'] = 'wedeliver:session:'
