@@ -59,7 +59,6 @@ app_secret = '07d2173fc3989b8d23642519f8de0f4f'  ##
 #              104:server error, connot connect to wechat server or server is busy
 #              105:invalid js_code
 #
-#
 #       }
 #database{
 #              201:don't have this value
@@ -69,16 +68,15 @@ app_secret = '07d2173fc3989b8d23642519f8de0f4f'  ##
 #publish{
 #              301:publish failed
 #              302:invalid data
-#
-#
-#
+#              303:insufficient balance
 # }
 #match{
 #              401:connot find matchable order
-#
-#
 # }
-#
+#signing{
+#              501:wrong ReveiverID or OrderID
+#               
+# }
 #
 #
 #
@@ -110,10 +108,9 @@ def deliver_publish():
         return {'return_code' : 101}
     userInfo = selectUserById(str(sess['openid']))
     if (userInfo == (None,None,None)):
-        # -2: not registered
         return {'return_code' : 102}
 
-    if not json.json.loads(request.values.get("time")):
+    if not json.loads(request.values.get("time")):
         #time  string ,and format is "year.month.day.hour(24).minute.second"
         time = str(json.loads(request.values.get("time")))
     else:
@@ -127,20 +124,13 @@ def deliver_publish():
         return {'return_code':302}
 
 
-    if not json.loads(request.values.get("reward")):
-        #reward  int
-        reward = int(json.loads(request.values.get("reward")))
-    else:
-        return {'return_code':302}
-
-
     if not json.loads(request.values.get("ps")):
         #ps string
         ps = str(json.loads(request.values.get("ps")))
     else:
         return {'return_code':302}
 
-    insertOrder(sts=3, rid='', did=sess['openid'], tm=time, cg=cargo, rw=reward, ps=ps)
+    insertOrder(oid = genOID(),sts = 3, rid = '', did = sess['openid'], tm = time, cg = cargo, rw = 0, ps=ps)
     return {'return_code': 0}
 
 
@@ -152,11 +142,12 @@ def deliver_match():
     if not sess:
         return {'return_code' : 101}
     rid = str(sess['openid'])
+    userInfo = selectUserById(rid)
     if (userInfo == (None,None,None)):
 
         return {'return_code' : 102}
 
-    if not json.json.loads(request.values.get("time")):
+    if not json.loads(request.values.get("time")):
         #time  string ,and format is "year.month.day.hour(24).minute.second"
         time = str(json.loads(request.values.get("time")))
     else:
@@ -213,7 +204,7 @@ def receiver_publish():
     if (userInfo == (None,None,None)):
         return {'return_code':102}
 
-    if not json.json.loads(request.values.get("time")):
+    if not json.loads(request.values.get("time")):
         #time  string ,and format is "year.month.day.hour(24).minute.second"
         time = str(json.loads(request.values.get("time")))
     else:
@@ -240,8 +231,13 @@ def receiver_publish():
     else:
         return {'return_code':302}
 
-    insertOrder(sts=2, rid=sess['openid'], did='', tm=time, cg=cargo, rw=reward, ps=ps)
-    return {'return_code': 0}
+    if (userInfo[2] - reward) >= 0 :
+        insertOrder(genOID(),sts=2, rid=sess['openid'], did='', tm=time, cg=cargo, rw=reward, ps=ps)
+        return {'return_code': 0}
+    else:
+        return {'return_code':303}
+
+
 
 # api for Deliver to choose a receiver order
 @app.route('/api/receiver/match', methods=['POST'])
@@ -256,6 +252,38 @@ def receiver_match():
     updateOrdersStatusById(request.values.get("receiverOrderId"), 5)
     return {'return_code': 0}
 
+    
+#==================================
+#signing api
+#==================================
+#this api request receiver's orderID
+@app.route('/api/signing/',methods = ['GET'])
+def signing():
+    sess = flask.session.get('WESESSID', None)
+    if not sess:
+        return {'return_code' : 101}
+    userInfo = selectUserById(str(sess['openid']))
+    if (userInfo == (None,None,None)):
+        return {'return_code' : 102}
+    OrderID = request.values.get("OrderId")
+    #The URL format shoudle be https://www.wehaveworld.cn/api/signing/?OrderID=
+    ReceiverOrderData = selectOrderById(str(OrderID))
+    ReceiverID = ReceiverOrderData[3]
+    status = ReceiverOrderData[1]
+    reward = ReceiverOrderData[6]
+    DeliverID = ReceiverOrderData[2]
+    DeliverData = selectUserById(DeliverID)
+    if ReceiverID == str(sess['openid']):
+        if status == 5:
+            updateOrdersStatusById(OrderID , 0)
+            points = DeliverData[2]
+            updateUsersPointsById(DeliverID, points+reward)
+            return {'return_code': 0}
+    else:
+        return {'return_code':501}
+
+
+
 #===================================
 # user api
 #===================================
@@ -263,11 +291,9 @@ def receiver_match():
 def user():
     sess = flask.session.get('WESESSID', None)
     if not sess:
-        #  -1: not logined
         return {'return_code' : 101}
     userInfo = selectUserById(str(sess['openid']))
     if (userInfo == (None,None,None)):
-        # -2: not registered
         return {'return_code' : 102}
     return json.dumps('{'+ userInfo[1] +',' + userInfo[2] + '}')
 
