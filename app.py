@@ -3,7 +3,7 @@ import json
 import redis
 from flask import *
 from flask_session import Session
-from wx_login import Login
+import wx_login
 from  dbaction import *
 
 #test
