@@ -107,7 +107,7 @@ def deliver_publish():
     if not sess:
         return json.dumps({'return_code' : 101})
     userInfo = selectUserById(str(sess['openid']))
-    if (userInfo == (None,None,None)):
+    if (userInfo == None):
         return json.dumps({'return_code' : 102})
 
     if not json.loads(request.values.get("time")):
@@ -143,7 +143,7 @@ def deliver_match():
         return json.dumps({'return_code' : 101})
     rid = str(sess['openid'])
     userInfo = selectUserById(rid)
-    if (userInfo == (None,None,None)):
+    if (userInfo == None)):
 
         return json.dumps({'return_code' : 102})
 
@@ -201,7 +201,7 @@ def receiver_publish():
     if not sess:
         return json.dumps({'return_code': 101})
     userInfo = selectUserById(str(sess['openid']))
-    if (userInfo == (None,None,None)):
+    if (userInfo == None):
         return json.dumps({'return_code':102})
 
     if not json.loads(request.values.get("time")):
@@ -246,7 +246,7 @@ def receiver_match():
     did = str(sess['openid'])
     if not sess:
         return json.dumps({'return_code' : 101})
-    if (userInfo == (None,None,None)):
+    if (userInfo == None):
         return json.dumps({'return_code' : 102})
     updateOrdersDIDById(request.values.get("receiverOrderId"),did)
     updateOrdersStatusById(request.values.get("receiverOrderId"), 5)
@@ -263,7 +263,7 @@ def signing():
     if not sess:
         return json.dumps({'return_code' : 101})
     userInfo = selectUserById(str(sess['openid']))
-    if (userInfo == (None,None,None)):
+    if (userInfo == None):
         return json.dumps({'return_code' : 102})
     OrderID = request.values.get("OrderId")
     #The URL format shoudle be https://www.wehaveworld.cn/api/signing/?OrderID=
@@ -293,7 +293,7 @@ def user():
     if not sess:
         return json.dumps({'return_code' : 101})
     userInfo = selectUserById(str(sess['openid']))
-    if (userInfo == (None,None,None)):
+    if (userInfo == None):
         return json.dumps({'return_code' : 102})
     return json.dumps('{'+ userInfo[1] +',' + userInfo[2] + '}')
 
