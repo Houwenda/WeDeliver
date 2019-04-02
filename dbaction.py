@@ -80,7 +80,7 @@ def selectUserById(uid):
     conn.close()
     if row == []:
         #print('no such user')
-        return None, None, None
+        return None
     #print('UserID:', row[0][0],' Raddress:', row[0][1], ' Points:', row[0][2])
     return row[0][0], row[0][1], row[0][2]
 
@@ -189,7 +189,7 @@ def deleteOrdersById(oid):
         conn.close()
         return row
     else:
-        return None, None, None, None, None, None, None, None
+        return None
 
 
 if __name__ == "__main__":
