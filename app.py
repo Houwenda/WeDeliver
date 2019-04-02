@@ -143,7 +143,7 @@ def deliver_match():
         return json.dumps({'return_code' : 101})
     rid = str(sess['openid'])
     userInfo = selectUserById(rid)
-    if (userInfo == None)):
+    if (userInfo == None):
 
         return json.dumps({'return_code' : 102})
 
