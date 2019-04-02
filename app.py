@@ -89,7 +89,7 @@ app_secret = '07d2173fc3989b8d23642519f8de0f4f'  ##
 def deliver_data():
     res = selectOrderByStatus(2)
     if not res:
-        return {'return_code': 301}
+        return json.dumps({'return_code': 301})
     else:
          #rr = {res['OrderID']:{res['RID'], res['Cargo'], res['Reward'], res['PS'] }}
         return json.dumps(res)
@@ -105,33 +105,33 @@ def deliver_publish():
     #DID = str(json.loads(request.values.get("DID")))
     sess = flask.session.get('WESESSID', None)
     if not sess:
-        return {'return_code' : 101}
+        return json.dumps({'return_code' : 101})
     userInfo = selectUserById(str(sess['openid']))
     if (userInfo == (None,None,None)):
-        return {'return_code' : 102}
+        return json.dumps({'return_code' : 102})
 
     if not json.loads(request.values.get("time")):
         #time  string ,and format is "year.month.day.hour(24).minute.second"
         time = str(json.loads(request.values.get("time")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("cargo")):
         #cargo
         cargo = str(json.loads(request.values.get("cargo")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("ps")):
         #ps string
         ps = str(json.loads(request.values.get("ps")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
     insertOrder(oid = genOID(),sts = 3, rid = '', did = sess['openid'], tm = time, cg = cargo, rw = 0, ps=ps)
-    return {'return_code': 0}
+    return json.dumps({'return_code': 0})
 
 
 
@@ -140,32 +140,32 @@ def deliver_publish():
 def deliver_match():
     sess = flask.session.get('WESESSID', None)
     if not sess:
-        return {'return_code' : 101}
+        return json.dumps({'return_code' : 101})
     rid = str(sess['openid'])
     userInfo = selectUserById(rid)
     if (userInfo == (None,None,None)):
 
-        return {'return_code' : 102}
+        return json.dumps({'return_code' : 102})
 
     if not json.loads(request.values.get("time")):
         #time  string ,and format is "year.month.day.hour(24).minute.second"
         time = str(json.loads(request.values.get("time")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("cargo")):
         #cargo
         cargo = str(json.loads(request.values.get("cargo")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("reward")):
         #reward  int
         reward = int(json.loads(request.values.get("reward")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
     ps = str(json.loads(request.values.get("ps")))
     did = selectOrderById(request.values.get("deliverOrderId"))[2]
@@ -177,7 +177,7 @@ def deliver_match():
     updateOrdersCargoById(request.values.get("deliverOrderId"), json.dumps(formerCargo))
     if (formerCargo['num'] == 0):
         updateOrdersStatusById(request.values.get("deliverOrderId"), 4)
-    return {'return_code': 0}
+    return json.dumps({'return_code': 0})
 
 #===================================
 # receiver api
@@ -190,7 +190,7 @@ def deliver_match():
 def receiver_data():
     res = selectOrderByStatus(3)
     if not res:
-        return {'return_code':301}
+        return json.dumps({'return_code':301})
     return json.dumps(res)
 
 #api for deliver to publish the order
@@ -199,43 +199,43 @@ def receiver_data():
 def receiver_publish():
     sess = flask.session.get('WESESSID', None)
     if not sess:
-        return {'return_code': 101}
+        return json.dumps({'return_code': 101})
     userInfo = selectUserById(str(sess['openid']))
     if (userInfo == (None,None,None)):
-        return {'return_code':102}
+        return json.dumps({'return_code':102})
 
     if not json.loads(request.values.get("time")):
         #time  string ,and format is "year.month.day.hour(24).minute.second"
         time = str(json.loads(request.values.get("time")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("cargo")):
         #cargo
         cargo = str(json.loads(request.values.get("cargo")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("reward")):
         #reward  int
         reward = int(json.loads(request.values.get("reward")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
 
     if not json.loads(request.values.get("ps")):
         #ps string
         ps = str(json.loads(request.values.get("ps")))
     else:
-        return {'return_code':302}
+        return json.dumps({'return_code':302})
 
     if (userInfo[2] - reward) >= 0 :
         insertOrder(genOID(),sts=2, rid=sess['openid'], did='', tm=time, cg=cargo, rw=reward, ps=ps)
-        return {'return_code': 0}
+        return json.dumps({'return_code': 0})
     else:
-        return {'return_code':303}
+        return json.dumps({'return_code':303})
 
 
 
@@ -245,12 +245,12 @@ def receiver_match():
     sess = flask.session.get('WESESSID', None)
     did = str(sess['openid'])
     if not sess:
-        return {'return_code' : 101}
+        return json.dumps({'return_code' : 101})
     if (userInfo == (None,None,None)):
-        return {'return_code' : 102}
+        return json.dumps({'return_code' : 102})
     updateOrdersDIDById(request.values.get("receiverOrderId"),did)
     updateOrdersStatusById(request.values.get("receiverOrderId"), 5)
-    return {'return_code': 0}
+    return json.dumps({'return_code': 0})
 
     
 #==================================
@@ -261,10 +261,10 @@ def receiver_match():
 def signing():
     sess = flask.session.get('WESESSID', None)
     if not sess:
-        return {'return_code' : 101}
+        return json.dumps({'return_code' : 101})
     userInfo = selectUserById(str(sess['openid']))
     if (userInfo == (None,None,None)):
-        return {'return_code' : 102}
+        return json.dumps({'return_code' : 102})
     OrderID = request.values.get("OrderId")
     #The URL format shoudle be https://www.wehaveworld.cn/api/signing/?OrderID=
     ReceiverOrderData = selectOrderById(str(OrderID))
@@ -278,9 +278,9 @@ def signing():
             updateOrdersStatusById(OrderID , 0)
             points = DeliverData[2]
             updateUsersPointsById(DeliverID, points+reward)
-            return {'return_code': 0}
+            return json.dumps({'return_code': 0})
     else:
-        return {'return_code':501}
+        return json.dumps({'return_code':501})
 
 
 
@@ -291,10 +291,10 @@ def signing():
 def user():
     sess = flask.session.get('WESESSID', None)
     if not sess:
-        return {'return_code' : 101}
+        return json.dumps({'return_code' : 101})
     userInfo = selectUserById(str(sess['openid']))
     if (userInfo == (None,None,None)):
-        return {'return_code' : 102}
+        return json.dumps({'return_code' : 102})
     return json.dumps('{'+ userInfo[1] +',' + userInfo[2] + '}')
 
 #              104:server error, connot connect to wechat server or server is busy
@@ -307,20 +307,20 @@ def login():
     L = Login(user_code)
     if L.is_login():
         if L.errcode == -1 or L.errcode == 40029:
-            return {'return_code': 104}
+            return json.dumps({'return_code': 104})
         if L.errcode ==  40029:
-            return {'return_code': 105}
+            return json.dumps({'return_code': 105})
         else:
-            return {'return_code':0}
+            return json.dumps({'return_code':0})
 
 @app.route('/api/user/new/', methods=['POST'])
 def newuser():
     sess = flask.session.get('WESESSID', None)
     if  not sess:
-        return {'return_code' : 101}
+        return json.dumps({'return_code' : 101})
     Raddr = request.values.get('Raddr')
     insertUser(str(sess['openid']), Raddr, 100)
-    return {'return_code' : 0}
+    return json.dumps({'return_code' : 0})
 
 if __name__ == '__main__':
     app.run(port=8000, debug=True)
