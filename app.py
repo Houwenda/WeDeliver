@@ -13,7 +13,7 @@ Session(app)
 app_id = 'wxca274128ca35c80b'
 app_secret = '07d2173fc3989b8d23642519f8de0f4f'
 
-@app.route('/api/deliver/data', methods=['GET'])
+@app.route('/api/deliver/data/', methods=['GET'])
 def deliver_data():
     res = selectOrderByStatus(2)
     if not res:
@@ -21,7 +21,7 @@ def deliver_data():
     return json.dumps(res)
 
 
-@app.route('/api/deliver/publish', methods=['POST'])
+@app.route('/api/deliver/publish/', methods=['POST'])
 def deliver_publish():
     sess = session.get('WESESSID', None)
     if not sess:
@@ -79,7 +79,7 @@ def deliver_match():
     return json.dumps({'return_code': 0})
 
 
-@app.route('/api/receiver/data', methods=['GET'])
+@app.route('/api/receiver/data/', methods=['GET'])
 def receiver_data():
     res = selectOrderByStatus(3)
     if not res:
