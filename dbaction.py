@@ -28,8 +28,8 @@ def createTable():
     cursor.execute('''create table public.users(
 UserId varchar(256) not null primary key,
 Raddress varchar(512) not null,
-Points integer not null
-
+Points integer not null,
+UserData jsonb
 )''')
     conn.commit()
     cursor.execute('''create table public.orders(
@@ -47,11 +47,11 @@ PS varchar(256)
     print('table users , orders created')
 
 # insert a row into users
-def insertUser(uid, radd, pnt=100):
+def insertUser(uid, radd, udt, pnt=100):
     conn = psycopg2.connect(database = "postgres", user = "postgres",password = "postgres", host = "127.0.0.1", port=dbport )
     cursor = conn.cursor()
-    cursor.execute("insert into public.users(UserID, Raddress, Points) \
-values(%s, %s, %s)", (uid, radd, pnt))
+    cursor.execute("insert into public.users(UserID, Raddress, Points, UserData) \
+values(%s, %s, %s)", (uid, radd, pnt, udt))
     conn.commit()
     conn.close()
     return 0
@@ -75,14 +75,14 @@ values(%s, %s, %s, %s, to_timestamp(%s, 'YYYY:MON:DD:HH24:MI:SS'), %s, %s, %s)",
 def selectUserById(uid):
     conn = psycopg2.connect(database = "postgres", user = "postgres",password = "postgres", host = "127.0.0.1", port=dbport )
     cursor = conn.cursor()
-    cursor.execute("select UserId, Raddress, Points from public.users where UserId=%s",(uid,))
+    cursor.execute("select UserId, Raddress, Points, UserData from public.users where UserId=%s",(uid,))
     row = cursor.fetchall()
     conn.close()
     if row == []:
         #print('no such user')
         return None
-    #print('UserID:', row[0][0],' Raddress:', row[0][1], ' Points:', row[0][2])
-    return row[0][0], row[0][1], row[0][2]
+    #print('UserID:', row[0][0],' Raddress:', row[0][1], ' Points:', row[0][2]), 'UserData', row[0][3]
+    return row[0][0], row[0][1], row[0][2], row[0][3]
 
 # select order data by id
 def selectOrderById(oid):
