@@ -106,11 +106,20 @@ def selectOrderByStatus(sts):
     conn.close()
     return rows # rows is possible to be empty
 
-# select order data by receiverid , status is 2
+# select order data by receiverid
 def selectOrderByRID (rid):
     conn = psycopg2.connect(database = "postgres", user = "postgres",password = "postgres", host = "127.0.0.1", port=dbport )
     cursor = conn.cursor()
-    cursor.execute("select OrderID, Status, DID, RID, to_char(Time, 'YYYY:MON:DD:HH24:MI:SS'), Cargo, Reward, PS from public.orders where Status=2 and RID=%s", (rid,))
+    cursor.execute("select OrderID, Status, DID, RID, to_char(Time, 'YYYY:MON:DD:HH24:MI:SS'), Cargo, Reward, PS from public.orders where RID=%s", (rid,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows # rows is possible to be empty
+
+# select order data by receiverid
+def selectOrderByDID (did):
+    conn = psycopg2.connect(database = "postgres", user = "postgres",password = "postgres", host = "127.0.0.1", port=dbport )
+    cursor = conn.cursor()
+    cursor.execute("select OrderID, Status, DID, RID, to_char(Time, 'YYYY:MON:DD:HH24:MI:SS'), Cargo, Reward, PS from public.orders where DID=%s", (did,))
     rows = cursor.fetchall()
     conn.close()
     return rows # rows is possible to be empty

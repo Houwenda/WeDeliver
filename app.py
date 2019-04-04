@@ -127,11 +127,9 @@ def receiver_publish():
 @app.route('/api/receiver/match/', methods=['POST'])
 def receiver_match():
     sess = session.get('WESESSID', None)
-    did = str(sess['openid'])
     if not sess:
         return json.dumps({'return_code': 101})
-    if userInfo == None:
-        return json.dumps({'return_code': 102})
+    did = str(sess['openid'])
     updateOrdersDIDById(request.values.get('receiverOrderId'), did)
     updateOrdersStatusById(request.values.get('receiverOrderId'), 5)
     return json.dumps({'return_code': 0})
@@ -172,7 +170,7 @@ def user():
     userInfo = selectUserById(sess['openid'])
     if userInfo == None:
         return json.dumps({'return_code': 102})
-    return json.dumps({'return_code': 0, 'Raddr': userInfo[1], 'points': userInfo[2], 'userData': userInfo[3]})
+    return json.dumps({'return_code': 0, 'Raddr': userInfo[1], 'points': userInfo[2], 'phonenum': userInfo[3]})
 
 
 @app.route('/api/user/login/', methods=['POST'])
@@ -189,8 +187,8 @@ def newuser():
     sess = session.get('WESESSID', None)
     if not sess:
         return json.dumps({'return_code': 101})
-    Raddr = request.values.get('Raddr')
-    phonenum = request.values.get('phonenum')
+    Raddr = request.json['Raddr']
+    phonenum = request.json['phonenum']
     insertUser(sess['openid'], Raddr, udt=phonenum)
     return json.dumps({'return_code': 0})
 
@@ -211,3 +209,13 @@ def genOID():
             break
 
     return id
+
+@app.route('/api/user/currorder/')
+def  currorder():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return jsonify( {'return_code' : 101})
+    rreq = selectOrderByRID(str(sess['openid']))
+    dreq = selectOrderByDID(str(sess['openid']))
+    return json.dumps({'ret': 0, 'rreq': rreq , 'dreq': dreq})
+
