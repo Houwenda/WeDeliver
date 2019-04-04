@@ -1,68 +1,221 @@
-import sys
+import sys, json, redis
 from flask import *
-import json
-import wx_login
-
-'''
-defaultencoding = "utf-8"
-if sys.getdefaultencoding() != defaultencoding:
-    reload(sys)
-    sys.setdefaultencoding(defaultencoding)
-'''
-
-
+from flask_session import Session
+from dbaction import *
 
 app = Flask(__name__)
+rds = redis.StrictRedis.from_url('redis://@127.0.0.1:6379')
+app.config['SESSION_COOKIE_NAME'] = 'WESESSID'
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_KEY_PREFIX'] = 'wedeliver:session:'
+app.config['SESSION_REDIS'] = rds
+Session(app)
+app_id = 'wxca274128ca35c80b'
+app_secret = '07d2173fc3989b8d23642519f8de0f4f'
 
+@app.route('/api/test/')
+def test():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    return json.dumps({'session':sess['userData']})
 
-#api for deliver_data 
-#this api return deliver data in json 
-@app.route('/api/deliver_data',methods=['GET'])
+@app.route('/api/deliver/data/', methods=['GET'])
 def deliver_data():
-    pass
+    res = selectOrderByStatus(2)
+    if not res:
+        return json.dumps({'return_code': 301})
+    return json.dumps(res)
 
-#api for deliver to publish the order
-#this api handle the request, and deposited the data into the database
-@app.route('/api/deliver_publish',methods=['POST'])
+
+@app.route('/api/deliver/publish/', methods=['POST'])
 def deliver_publish():
-    #OrderID should be string
-    OrderID = str(json.loads(request.values.get("OrderID")))
-    #DID should be string
-    DID = str(json.loads(request.values.get("DID")))
-    #time should be string ,and format is "year.month.day.hour(24).minute.second"
-    time = str(json.loads(request.values.get("time")))
-    #
-    cargo = str(json.loads(request.values.get("cargo")))
-    #reward should be int
-    reward = int(json.loads(request.values.get("reward")))
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    userInfo = selectUserById(str(sess['openid']))
+    if userInfo == None:
+        return json.dumps({'return_code': 102})
+    if not json.loads(request.values.get('time')):
+        time = str(json.loads(request.values.get('time')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('cargo')):
+        cargo = str(json.loads(request.values.get('cargo')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('ps')):
+        ps = str(json.loads(request.values.get('ps')))
+    else:
+        return json.dumps({'return_code': 302})
+    insertOrder(oid=genOID(), sts=3, rid='', did=sess['openid'], tm=time, cg=cargo, rw=0, ps=ps)
+    return json.dumps({'return_code': 0})
 
 
+@app.route('/api/deliver/match/', methods=['POST'])
+def deliver_match():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    rid = str(sess['openid'])
+    userInfo = selectUserById(rid)
+    if userInfo == None:
+        return json.dumps({'return_code': 102})
+    if not json.loads(request.values.get('time')):
+        time = str(json.loads(request.values.get('time')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('cargo')):
+        cargo = str(json.loads(request.values.get('cargo')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('reward')):
+        reward = int(json.loads(request.values.get('reward')))
+    else:
+        return json.dumps({'return_code': 302})
+    ps = str(json.loads(request.values.get('ps')))
+    did = selectOrderById(request.values.get('deliverOrderId'))[2]
+    oid = genOId()
+    sts = 2
+    insertOrder(oid, sts, did, rid, time, cargo, reward, ps)
+    formerCargo = selectOrderById(did)[5]
+    formerCargo['num'] -= cargo['num']
+    updateOrdersCargoById(request.values.get('deliverOrderId'), json.dumps(formerCargo))
+    if formerCargo['num'] == 0:
+        updateOrdersStatusById(request.values.get('deliverOrderId'), 4)
+    return json.dumps({'return_code': 0})
 
-#api for receiver_data 
-#this api return receiver data in json 
-@app.route('/api/receiver_data',methods=['GET'])
+
+@app.route('/api/receiver/data/', methods=['GET'])
 def receiver_data():
-    pass
+    res = selectOrderByStatus(3)
+    if not res:
+        return json.dumps({'return_code': 301})
+    return json.dumps(res)
 
-#api for deliver to publish the order
-#this api handle the request, and deposited the data into the database
-@app.route('/api/receiver_publish',methods=['POST'])
+
+@app.route('/api/receiver/publish/', methods=['POST'])
 def receiver_publish():
-    pass
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    userInfo = selectUserById(str(sess['openid']))
+    if userInfo == None:
+        return json.dumps({'return_code': 102})
+    if not json.loads(request.values.get('time')):
+        time = str(json.loads(request.values.get('time')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('cargo')):
+        cargo = str(json.loads(request.values.get('cargo')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('reward')):
+        reward = int(json.loads(request.values.get('reward')))
+    else:
+        return json.dumps({'return_code': 302})
+    if not json.loads(request.values.get('ps')):
+        ps = str(json.loads(request.values.get('ps')))
+    else:
+        return json.dumps({'return_code': 302})
+    if userInfo[2] - reward >= 0:
+        insertOrder(genOID(), sts=2, rid=sess['openid'], did='', tm=time, cg=cargo, rw=reward, ps=ps)
+        return json.dumps({'return_code': 0})
+    return json.dumps({'return_code': 303})
 
-@app.route('/api/login',methods=['POST'])
-def Login():
-    user_code = str(request.values.get("code"))
-    L = wx_login.login(user_code)
-    res = L.back()
+
+@app.route('/api/receiver/match/', methods=['POST'])
+def receiver_match():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    did = str(sess['openid'])
+    updateOrdersDIDById(request.values.get('receiverOrderId'), did)
+    updateOrdersStatusById(request.values.get('receiverOrderId'), 5)
+    return json.dumps({'return_code': 0})
+
+
+@app.route('/api/signing/', methods=['GET'])
+def signing():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    userInfo = selectUserById(str(sess['openid']))
+    if userInfo == None:
+        return json.dumps({'return_code': 102})
+    OrderID = request.values.get('OrderId')
+    ReceiverOrderData = selectOrderById(str(OrderID))
+    ReceiverID = ReceiverOrderData[3]
+    status = ReceiverOrderData[1]
+    reward = ReceiverOrderData[6]
+    DeliverID = ReceiverOrderData[2]
+    DeliverData = selectUserById(DeliverID)
+    if ReceiverID == str(sess['openid']):
+        if status == 5:
+            updateOrdersStatusById(OrderID, 0)
+            points = DeliverData[2]
+            updateUsersPointsById(DeliverID, points + reward)
+            return json.dumps({'return_code': 0})
+    else:
+        return json.dumps({'return_code': 501})
+
+
+from wx_login import Login
+
+@app.route('/api/user/', methods=['GET'])
+def user():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    userInfo = selectUserById(sess['openid'])
+    if userInfo == None:
+        return json.dumps({'return_code': 102})
+    return json.dumps({'return_code': 0, 'Raddr': userInfo[1], 'points': userInfo[2], 'phonenum': userInfo[3]})
+
+
+@app.route('/api/user/login/', methods=['POST'])
+def login():
+    user_code = str(request.values.get('code'))
+    L = Login(user_code)
     if L.is_login():
-        return json.dumps(res)
+        return json.dumps({'return_code': 0})
+    return json.dumps({'return_code': L.errcode})
 
 
+@app.route('/api/user/new/', methods=['POST'])
+def newuser():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    Raddr = request.json['Raddr']
+    phonenum = request.json['phonenum']
+    insertUser(sess['openid'], Raddr, udt=phonenum)
+    return json.dumps({'return_code': 0})
 
+@app.route('/api/order/data/', methods=['GET'])
+def orderData():
+    res = selectOrderById(request.values.get('oid'))
+    if not res:
+        return json.dumps({'return_code': 301})
+    return json.dumps(res)
 
-    
+import random
 
+def genOID():
+    while True:
+        id = random.randint(10)
+        res = selectOrderById(id)
+        if res is None:
+            break
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    return id
+
+@app.route('/api/user/currorder/')
+def  currorder():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return jsonify( {'return_code' : 101})
+    rreq = selectOrderByRID(str(sess['openid']))
+    dreq = selectOrderByDID(str(sess['openid']))
+    return json.dumps({'ret': 0, 'rreq': rreq , 'dreq': dreq})
+
