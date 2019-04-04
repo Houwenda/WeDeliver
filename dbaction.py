@@ -51,7 +51,7 @@ def insertUser(uid, radd, udt, pnt=100):
     conn = psycopg2.connect(database = "postgres", user = "postgres",password = "postgres", host = "127.0.0.1", port=dbport )
     cursor = conn.cursor()
     cursor.execute("insert into public.users(UserID, Raddress, Points, UserData) \
-values(%s, %s, %s)", (uid, radd, pnt, udt))
+values(%s, %s, %s, %s)", (uid, radd, pnt, udt))
     conn.commit()
     conn.close()
     return 0
@@ -194,7 +194,7 @@ def deleteOrdersById(oid):
 
 if __name__ == "__main__":
 #    connectPostgresql()
-#    createTable()
+    createTable()
 #    insertUser(str(123123), 'testtest', 100)
 #    insertOrder(str(456456), 0, 'delivererid', 'recieverid', '2019:MAR:27:16:10:45', '{\"size\":\"big\", \"num\":3}', '10', 'remarks')
 #    print(selectUserById(str(123123))) # ('123123', 'testtest', 100)

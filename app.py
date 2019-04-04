@@ -13,11 +13,18 @@ Session(app)
 app_id = 'wxca274128ca35c80b'
 app_secret = '07d2173fc3989b8d23642519f8de0f4f'
 
+@app.route('/api/test/')
+def test():
+    sess = session.get('WESESSID', None)
+    if not sess:
+        return json.dumps({'return_code': 101})
+    return json.dumps({'session':sess['userData']})
+
 @app.route('/api/deliver/data/', methods=['GET'])
 def deliver_data():
     res = selectOrderByStatus(2)
     if not res:
-        return json.dumps({'return_code': 401})
+        return json.dumps({'return_code': 301})
     return json.dumps(res)
 
 
@@ -171,9 +178,7 @@ def user():
 @app.route('/api/user/login/', methods=['POST'])
 def login():
     user_code = str(request.values.get('code'))
-    enc = str(request.values.get('encryptedData'))
-    iv = str(request.values.get('iv'))
-    L = Login(user_code, enc, iv)
+    L = Login(user_code)
     if L.is_login():
         return json.dumps({'return_code': 0})
     return json.dumps({'return_code': L.errcode})
@@ -185,9 +190,16 @@ def newuser():
     if not sess:
         return json.dumps({'return_code': 101})
     Raddr = request.values.get('Raddr')
-    insertUser(sess['openid'], Raddr, 100, sess['userData'])
+    phonenum = request.values.get('phonenum')
+    insertUser(sess['openid'], Raddr, udt=phonenum)
     return json.dumps({'return_code': 0})
 
+@app.route('/api/order/data/', methods=['GET'])
+def orderData():
+    res = selectOrderById(request.values.get('oid'))
+    if not res:
+        return json.dumps({'return_code': 301})
+    return json.dumps(res)
 
 import random
 

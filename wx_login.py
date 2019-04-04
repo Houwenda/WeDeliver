@@ -5,9 +5,6 @@ from app import app_secret, app_id
 
 
 class Login(object):
-    #js_code = ''
-    #openid = ''
-    #__session_key = ''
     errcode = -1
     errmsg = ''
     
@@ -20,7 +17,7 @@ class Login(object):
     45011 	频率限制，每个用户每分钟100次
     '''
     
-    def __init__(self,code):
+    def __init__(self, code):
         #self.js_code = code
 
         api = 'https://api.weixin.qq.com/sns/jscode2session'
@@ -29,17 +26,13 @@ class Login(object):
         url = api + '?' + params
         response = requests.get(url=url)
         result = json.loads(response.text)
-        if 'errcode' in result and result['errcode']== 0:
-            #self.openid = result['openid']
-            #self.__session_key = result['session_key']
-            self.errcode = result['errcode']
-            self.errmsg = result['ermsg']
-            # Issue whether to store the sesskey???
-            flask.session['WESESSID'] = { 'openid':result['openid'], 'sesskey':result['session_key'] }
-        else:
-            pass
-
-
+        if not result.get('errcode'):
+            flask.session['WESESSID'] = { 'openid' : result['openid'] }
+            self.errcode =  0
+        elif result['errcode'] == -1:
+            self.errcode = 104
+        elif result['errcode'] ==  40029:
+            self.errcode = 105
     
     #def is_login(self):
     #    if self.errcode == 0:
